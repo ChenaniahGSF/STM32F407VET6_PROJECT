@@ -5,7 +5,7 @@
  *      Author: Diamo
  */
 #include "ee24.h"
-//#include "spif.h"
+#include "spif.h"
 #include "logger.h"
 #include "test.h"
 
@@ -39,13 +39,12 @@ void at24cxx_test(void) {
   }
 };
 
-#if 0
 uint8_t spi_read[256];
 uint8_t spi_write[256];
 SPIF_HandleTypeDef spif;
 
 void w25qxx_test(void) {
-  if(SPIF_Init(&spif, &hspi1, SPI1_CS_GPIO_Port, SPI1_CS_Pin)) {
+  if(SPIF_Init(&spif, &hspi3, SPI3_CS_GPIO_Port, SPI3_CS_Pin)) {
     for(int i=0; i<256; i++) {
       spi_write[i] = i;
     }
@@ -62,5 +61,4 @@ void w25qxx_test(void) {
     logger_error("SPIF_Init failed..");
   }
 }
-#endif
 
