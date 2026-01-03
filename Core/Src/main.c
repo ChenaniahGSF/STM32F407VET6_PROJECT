@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
+#include "i2c.h"
 #include "rtc.h"
 #include "tim.h"
 #include "usart.h"
@@ -31,6 +32,7 @@
 #include "lwshell/lwshell_user.h"
 #include "smarttimer_user.h"
 #include "xmodem.h"
+#include "test.h"
 
 /* USER CODE END Includes */
 
@@ -99,6 +101,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_RTC_Init();
   MX_TIM6_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
   logger_init();
@@ -112,6 +115,8 @@ int main(void)
 
   buttons_init();
   lwshell_user_init();
+
+  at24cxx_test();
 
   while (1)
   {
