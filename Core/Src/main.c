@@ -30,6 +30,7 @@
 #include "multi_button_user.h"
 #include "lwshell/lwshell_user.h"
 #include "smarttimer_user.h"
+#include "xmodem.h"
 
 /* USER CODE END Includes */
 
@@ -101,7 +102,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   logger_init();
-  uart_init();
+  usart_init();
 
   logger_info("System Start!!!");
   /* USER CODE END 2 */
@@ -119,6 +120,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
     //HAL_Delay(1000);
     stim_mainloop();
+    xmodem_receive_mainfuncion();
   }
   /* USER CODE END 3 */
 }

@@ -45,10 +45,13 @@
 #define logger_info(format, ...)
 #define logger_warn(format, ...)
 #define logger_error(format, ...)
+#define logger_printf(format, ...)
 #endif
 
 void logger_init(void);
 void logger_hex(uint8_t* in, size_t ilen);
+void logger_disable(void);
+void logger_enable(void);
 
 
 

@@ -7,11 +7,13 @@
 #include "multi_button_user.h"
 #include "logger.h"
 #include "tim.h"
+#include "usart.h"
 
 #define MAX_BUTTONS  (2)
 
 static int demo_mode = 1;
 static int verbose_mode = 0;
+static int click_cnt = 0;
 
 // Button instances
 static Button buttons[MAX_BUTTONS];
@@ -80,8 +82,10 @@ void on_press_up(Button* btn) { generic_event_handler(btn, "Press Up"); }
 void on_single_click(Button* btn) { generic_event_handler(btn, "Single Click"); }
 void on_double_click(Button* btn) {
   generic_event_handler(btn, "Double Click");
-  HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
-  HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+  if(btn->button_id == 1) {
+    click_cnt++;
+    usart_set_callback((uint8_t)(click_cnt%2));
+  }
 }
 void on_long_press_start(Button* btn) { generic_event_handler(btn, "Long Press Start"); }
 void on_long_press_hold(Button* btn) { generic_event_handler(btn, "Long Press Hold"); }

@@ -25,6 +25,8 @@
 #include "lwutil/lwutil.h"
 #include "lwshell/lwshell.h"
 #include "lwshell/lwshell_user.h"
+#include "xmodem.h"
+#include "logger.h"
 
 /* USER CODE END 0 */
 
@@ -94,7 +96,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     hdma_usart1_rx.Init.MemInc = DMA_MINC_ENABLE;
     hdma_usart1_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
     hdma_usart1_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-    hdma_usart1_rx.Init.Mode = DMA_CIRCULAR;
+    hdma_usart1_rx.Init.Mode = DMA_NORMAL;
     hdma_usart1_rx.Init.Priority = DMA_PRIORITY_LOW;
     hdma_usart1_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
     if (HAL_DMA_Init(&hdma_usart1_rx) != HAL_OK)
@@ -153,49 +155,63 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   }
 }
 #endif
+typedef void (*usart_callback)(uint8_t* in, uint16_t size);
 
-lwrb_t usart_tx_rb;
-uint8_t usart_tx_rb_data[128];
+uint8_t usart_rx_dma_buffer[X_PACKET_PROTOCOL_SIZE+X_PACKET_NUMBER_SIZE+X_PACKET_1024_SIZE+X_PACKET_CRC_SIZE];
 
-volatile size_t usart_tx_dma_current_len = 0;
-uint8_t usart_rx_dma_buffer[64];
+usart_callback g_usart_callback = NULL;
 
-void usart_rx_check(size_t pos) {
-    static size_t old_pos;
-
-    if (pos != old_pos) {
-        if (pos > old_pos) {
-            lwrb_write(&usart_tx_rb, &usart_rx_dma_buffer[old_pos], pos - old_pos);
-        } else {
-            lwrb_write(&usart_tx_rb, &usart_rx_dma_buffer[old_pos], LWUTIL_ARRAYSIZE(usart_rx_dma_buffer) - old_pos);
-            if (pos > 0) {
-                lwrb_write(&usart_tx_rb, &usart_rx_dma_buffer[0], pos);
-            }
-        }
-        old_pos = pos;
-    }
+static void usart_lwshell_callback(uint8_t* in, uint16_t size)
+{
+  lwshell_input(in, size);
 }
 
 //uart HT TC IDLE event will trigger this callback, dma mode enable
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
-  if (huart == &huart1) {
-    usart_rx_check(Size);
-
-    if (usart_tx_dma_current_len == 0 && (usart_tx_dma_current_len = lwrb_get_linear_block_read_length(&usart_tx_rb)) > 0) {
-      lwshell_input(lwrb_get_linear_block_read_address(&usart_tx_rb), usart_tx_dma_current_len);
-
-      lwrb_skip(&usart_tx_rb, usart_tx_dma_current_len);
-      usart_tx_dma_current_len = 0;
+  //if (huart->Instance == USART1 && huart->RxEventType != HAL_UART_RXEVENT_HT) {
+  if (huart->Instance == USART1) {
+    if(g_usart_callback != NULL) {
+      g_usart_callback(usart_rx_dma_buffer, Size);
     }
+
+    //enable TC IDLE event, disable HT event
     HAL_UARTEx_ReceiveToIdle_DMA(&huart1, usart_rx_dma_buffer, sizeof(usart_rx_dma_buffer));
+    __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
   }
 }
 
-void uart_init(void) {
-  lwrb_init(&usart_tx_rb, usart_tx_rb_data, sizeof(usart_tx_rb_data));
+void usart_set_callback(uint8_t operation)
+{
+  switch(operation)
+  {
+    case 0:
+      g_usart_callback = usart_lwshell_callback;
+      logger_enable();
+      xmodem_stop_send_echo();
+      break;
+    case 1:
+      g_usart_callback = xmodem_receive_callback;
+      logger_disable();
+      xmodem_start_send_echo();
+      break;
+    default:
+      g_usart_callback = usart_lwshell_callback;
+      logger_enable();
+      xmodem_stop_send_echo();
+      break;
+  }
+}
+
+
+void usart_init(void) {
+  //default lwshell mode
+  usart_set_callback(0);
 
   //HAL_UART_Receive_IT(&huart1, uart_rx_buf, sizeof(uart_rx_buf));
+
   //will enable HT TC IDLE event
   HAL_UARTEx_ReceiveToIdle_DMA(&huart1, usart_rx_dma_buffer, sizeof(usart_rx_dma_buffer));
+  //disable HT event, because xmodem/ymodem not support HT event
+  __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
 }
 /* USER CODE END 1 */
