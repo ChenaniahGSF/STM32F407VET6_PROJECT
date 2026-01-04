@@ -8,6 +8,7 @@
 #include "spif.h"
 #include "logger.h"
 #include "test.h"
+#include "ee.h"
 
 EE24_HandleTypeDef ee24;
 uint8_t erase_data[4] = {0xff, 0xff, 0xff, 0xff};
@@ -60,5 +61,31 @@ void w25qxx_test(void) {
   } else {
     logger_error("SPIF_Init failed..");
   }
+}
+
+typedef struct
+{
+ uint32_t val1;
+ int16_t val2;
+ int8_t val3;
+ float val4;
+} stotrage_t;
+
+void ee_test(void) {
+
+  stotrage_t ee_data;
+  ee_init(&ee_data, sizeof(stotrage_t));
+  ee_read();
+  logger_info("val1: %u, val2: %d, val3: %d, val4: %f", ee_data.val1, ee_data.val2, ee_data.val3, ee_data.val4);
+#if 0
+  ee_data.val1 = 10000;
+  ee_data.val2 = -202;
+  ee_data.val3 = -3;
+  ee_data.val4 = 4.5f;
+  ee_write();
+  HAL_Delay(100);
+  ee_read();
+  logger_info("val1: %u, val2: %d, val3: %d, val4: %f", ee_data.val1, ee_data.val2, ee_data.val3, ee_data.val4);
+#endif
 }
 

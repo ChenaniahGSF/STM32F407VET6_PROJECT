@@ -118,8 +118,9 @@ int main(void)
   buttons_init();
   lwshell_user_init();
 
-  at24cxx_test();
-  w25qxx_test();
+  //at24cxx_test();
+  //w25qxx_test();
+  ee_test();
 
   while (1)
   {
