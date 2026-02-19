@@ -18,12 +18,12 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 #include "dma.h"
 #include "i2c.h"
 #include "rng.h"
 #include "rtc.h"
 #include "spi.h"
-#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -61,6 +61,7 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -102,7 +103,6 @@ int main(void)
   MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_RTC_Init();
-  MX_TIM6_Init();
   MX_I2C1_Init();
   MX_SPI3_Init();
   MX_RNG_Init();
@@ -112,27 +112,33 @@ int main(void)
   logger_init();
   usart_init();
 
-  logger_info("System Start!!!");
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-
   buttons_init();
   lwshell_user_init();
 
   //at24cxx_test();
   //w25qxx_test();
-  ee_test();
+  //ee_test();
+
+  logger_info("System Start!!!");
+  /* USER CODE END 2 */
+
+  /* Init scheduler */
+  osKernelInitialize();  /* Call init function for freertos objects (in cmsis_os2.c) */
+  MX_FREERTOS_Init();
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
 
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    //HAL_Delay(1000);
-    stim_mainloop();
-    xmodem_receive_mainfuncion();
   }
   /* USER CODE END 3 */
 }
@@ -209,10 +215,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-  if (htim->Instance == TIM6)
-  {
-    button_ticks();
-  }
+
   /* USER CODE END Callback 1 */
 }
 

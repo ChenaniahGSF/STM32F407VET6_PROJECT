@@ -196,7 +196,7 @@ void xmodem_receive_mainfuncion(void) {
           xmodem_transmit_ch(X_ACK);
         } else {
           xmodem_error_handler(&error_number, X_MAX_ERRORS);
-          HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
+          //HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
         }
         break;
       case X_EOT:
@@ -204,7 +204,7 @@ void xmodem_receive_mainfuncion(void) {
         xmodem_transmit_ch(X_ACK);
         xmodem_debug("xmodem received success");
         xmodem_start_send_echo();
-        HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+        //HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
         break;
       case X_CAN:
         status = X_ERROR;
